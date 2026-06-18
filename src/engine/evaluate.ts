@@ -122,17 +122,9 @@ export const QUALITY_META: Record<
   MoveQuality,
   { label: string; symbol: string; color: string }
 > = {
-  best: { label: "Najlepszy", symbol: "★", color: "var(--color-quality-best)" },
-  good: { label: "Dobry", symbol: "✓", color: "var(--color-quality-good)" },
-  inaccuracy: {
-    label: "Niedokładność",
-    symbol: "?!",
-    color: "var(--color-quality-inaccuracy)",
-  },
-  mistake: { label: "Błąd", symbol: "?", color: "var(--color-quality-mistake)" },
-  blunder: {
-    label: "Gafa",
-    symbol: "??",
-    color: "var(--color-quality-blunder)",
-  },
+  best: { label: "Najlepszy ruch", symbol: "★", color: "#21C7A8" },
+  good: { label: "Dobry ruch", symbol: "✓", color: "#5DBB63" },
+  inaccuracy: { label: "Niedokładność", symbol: "?!", color: "#E0A800" },
+  mistake: { label: "Błąd", symbol: "?", color: "#F08C2E" },
+  blunder: { label: "Gafa", symbol: "??", color: "#E5484D" },
 };

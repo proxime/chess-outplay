@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "engine:smoke": "node scripts/engine-smoke-test.mjs",
-    "engine:copy": "node scripts/copy-engine.mjs"
+    "engine:copy": "node scripts/copy-engine.mjs",
+    "screenshot": "node scripts/screenshot.mjs"
   },
   "dependencies": {
     "chess.js": "^1.4.0",
@@ -24,6 +25,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "playwright": "^1.61.0",
     "tailwindcss": "^4.3.1",
     "typescript": "^5.6.3",
     "vite": "^5.4.11",

@@ -6,6 +6,9 @@ dist
 dist-ssr
 *.tsbuildinfo
 
+# Visual-check artifacts
+screenshots
+
 # Local / editor
 *.local
 .vite

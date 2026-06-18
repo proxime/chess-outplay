@@ -27,6 +27,7 @@ npm run preview      # podgląd buildu produkcyjnego
 npm test             # testy jednostkowe logiki (vitest)
 npm run engine:smoke # headless test silnika (Node): czy zwraca bestmove
 npm run engine:copy  # odśwież pliki Stockfisha z node_modules do public/engine
+npm run screenshot   # zrzuty ekranu gry (wymaga: npx playwright install chromium)
 ```
 
 ## Architektura
@@ -42,7 +43,7 @@ src/
     chess.ts        reguły, odtwarzanie pozycji, materiał (chess.js)
     gameReducer.ts  historia + kursor (undo/redo, ucinanie przyszłości)
     useChessVsBot.ts  hook spinający całość — JEDYNE API dla UI
-  components/  warstwa prezentacji (placeholder skin; do podmiany na design)
+  components/  warstwa prezentacji (design „Ekran gry" z Claude Design)
 public/engine/  pliki silnika Stockfish (lite, single-threaded, ~7 MB)
 ```
 
@@ -67,5 +68,6 @@ po stronie klienta, nie jest potrzebny żaden backend ani funkcje serverless.
 
 ## Status
 
-Fundament gotowy i przetestowany (logika + silnik + grywalny UI). Warstwa
-wizualna to tymczasowy skin — docelowy design zostanie podmieniony.
+Działający ekran gry z designem z Claude Design (desktop), spięty z silnikiem
+i pełną logiką. Do zrobienia: wariant mobilny oraz ekrany startu / końca partii
+(pozostałe makiety z Claude Design).

@@ -1,4 +1,4 @@
-import type { GameConfig, GameState, Ply } from "./types";
+import type { GameConfig, GameState, LevelId, Ply } from "./types";
 import { STARTING_FEN } from "./chess";
 
 export const initialState: GameState = {
@@ -17,6 +17,7 @@ export type GameAction =
   | { type: "SET_CURSOR"; cursor: number }
   | { type: "SET_STATUS"; status: GameState["status"] }
   | { type: "SET_HINTS"; value: boolean }
+  | { type: "SET_LEVEL"; level: LevelId }
   | { type: "RESET" };
 
 function clamp(n: number, min: number, max: number): number {
@@ -54,6 +55,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "SET_HINTS":
       return { ...state, showHints: action.value };
+
+    case "SET_LEVEL":
+      return { ...state, level: action.level };
 
     case "RESET":
       return initialState;

@@ -20,6 +20,7 @@ import type {
   Analysis,
   EvalScore,
   GameConfig,
+  LevelId,
   MoveAssessment,
   PieceSymbol,
   Square,
@@ -241,6 +242,11 @@ export function useChessVsBot() {
     [],
   );
 
+  const setLevel = useCallback(
+    (level: LevelId) => dispatch({ type: "SET_LEVEL", level }),
+    [],
+  );
+
   const resign = useCallback(
     () => dispatch({ type: "SET_STATUS", status: "gameover" }),
     [],
@@ -316,6 +322,7 @@ export function useChessVsBot() {
     redo,
     jumpTo,
     setHints,
+    setLevel,
     resign,
     backToSetup,
   };
