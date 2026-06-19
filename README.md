@@ -9,6 +9,7 @@ Bez kont, bez bazy danych — wszystko działa lokalnie w przeglądarce.
 - ♟️ Gra przeciwko silnikowi **Stockfish 18** (WASM) na 4 poziomach trudności.
 - 🔁 Cofanie i ponawianie ruchów (z możliwością rozegrania partii od nowa z dowolnego miejsca).
 - 💡 Ocena każdego ruchu (Najlepszy / Dobry / Niedokładność / Błąd / Gafa) z najlepszą alternatywą.
+- 🌱 Eksploracja wariantów — kliknij alternatywę (też dla ruchu bota), aby rozegrać „co by było gdyby".
 - ✅ Wyłącznie legalne ruchy (egzekwowane przez `chess.js`), podświetlanie pól.
 - 🧠 Cała logika i stan po stronie klienta — gotowe do deployu jako statyczna strona.
 

@@ -201,31 +201,51 @@ export function TipCard({ game }: { game: ChessVsBot }) {
         </div>
       </div>
 
-      {/* alternatives */}
+      {/* alternatives — click to explore that line */}
       {a.alternatives.length > 0 && (
         <div style={{ marginTop: 14 }}>
-          <div style={{ ...caption, marginBottom: 8 }}>Alternatywy</div>
+          <div
+            style={{
+              ...caption,
+              marginBottom: 8,
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <span>Alternatywy</span>
+            <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500 }}>
+              kliknij, aby rozegrać
+            </span>
+          </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {a.alternatives.map((alt, i) => {
               const ev = formatEval(toWhite(alt.eval));
               const highlight = i === 0;
+              const played = alt.uci === ply.uci;
               return (
-                <span
+                <button
                   key={alt.uci}
+                  data-testid={`alt-${i}`}
+                  onClick={() => game.playAlternative(game.tipIndex, alt.uci)}
+                  title={played ? "Zagrany ruch — kliknij, aby powtórzyć" : "Rozegraj ten wariant"}
+                  className="hover:brightness-125"
                   style={{
                     fontSize: 13,
                     fontWeight: 600,
                     fontVariantNumeric: "tabular-nums",
+                    fontFamily: "inherit",
                     padding: "5px 10px",
                     borderRadius: 8,
-                    border: `1px solid ${highlight ? "#21C7A8" : "#232833"}`,
+                    cursor: "pointer",
+                    border: `1px solid ${highlight ? "#21C7A8" : "#2c3445"}`,
                     background: highlight ? "#21C7A822" : "#0E1116",
                     color: highlight ? "#21C7A8" : "#E8EAED",
+                    boxShadow: played ? "inset 0 0 0 1px #6C8CFF" : "none",
                   }}
                 >
                   {polishSan(alt.san)}{" "}
                   <span style={{ color: highlight ? "#21C7A8" : "#9AA3AF" }}>{ev}</span>
-                </span>
+                </button>
               );
             })}
           </div>

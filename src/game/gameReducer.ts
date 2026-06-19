@@ -5,6 +5,7 @@ export const initialState: GameState = {
   startFen: STARTING_FEN,
   history: [],
   cursor: 0,
+  selected: null,
   playerColor: "w",
   level: "intermediate",
   showHints: true,
@@ -14,7 +15,9 @@ export const initialState: GameState = {
 export type GameAction =
   | { type: "NEW_GAME"; config: GameConfig }
   | { type: "APPLY_MOVE"; ply: Ply }
+  | { type: "BRANCH"; index: number; ply: Ply }
   | { type: "SET_CURSOR"; cursor: number }
+  | { type: "SELECT_MOVE"; index: number }
   | { type: "SET_STATUS"; status: GameState["status"] }
   | { type: "SET_HINTS"; value: boolean }
   | { type: "SET_LEVEL"; level: LevelId }
@@ -31,6 +34,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         startFen: STARTING_FEN,
         history: [],
         cursor: 0,
+        selected: null,
         playerColor: action.config.playerColor,
         level: action.config.level,
         showHints: action.config.showHints,
@@ -41,14 +45,28 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Playing a move while reviewing the past discards the future line.
       const history = state.history.slice(0, state.cursor);
       history.push(action.ply);
-      return { ...state, history, cursor: history.length };
+      return { ...state, history, cursor: history.length, selected: null };
     }
 
     case "SET_CURSOR":
       return {
         ...state,
         cursor: clamp(action.cursor, 0, state.history.length),
+        selected: null,
       };
+
+    case "SELECT_MOVE": {
+      const index = clamp(action.index, 0, state.history.length - 1);
+      return { ...state, cursor: index + 1, selected: index };
+    }
+
+    case "BRANCH": {
+      // Replace history from `index` with a single alternative move and
+      // continue from there (explore a "what if" line).
+      const history = state.history.slice(0, action.index);
+      history.push(action.ply);
+      return { ...state, history, cursor: history.length, selected: null };
+    }
 
     case "SET_STATUS":
       return { ...state, status: action.status };

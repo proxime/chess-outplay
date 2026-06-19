@@ -109,6 +109,10 @@ export function useChessVsBot() {
   // player's most recent move over the bot's instant reply, so you can always
   // read the evaluation of YOUR move. While reviewing, it follows the cursor.
   const tipIndex = (() => {
+    // Explicit move-list selection wins.
+    if (state.selected !== null && state.selected < state.history.length) {
+      return state.selected;
+    }
     if (state.cursor === 0) return -1;
     const lastIdx = state.cursor - 1;
     const last = state.history[lastIdx];
@@ -246,6 +250,22 @@ export function useChessVsBot() {
     [applyMove],
   );
 
+  // Branch the game: replay the position before ply #index, play `uci` there
+  // instead, and continue. Lets you explore an alternative (incl. the bot's).
+  const playAlternative = useCallback((index: number, uci: string) => {
+    const s = stateRef.current;
+    const pos = positionAt(s.startFen, s.history, index);
+    const ply = tryMove(
+      pos,
+      uci.slice(0, 2) as Square,
+      uci.slice(2, 4) as Square,
+      (uci.slice(4, 5) || undefined) as PieceSymbol | undefined,
+    );
+    if (!ply) return;
+    requestedRef.current = "";
+    dispatch({ type: "BRANCH", index, ply });
+  }, []);
+
   const newGame = useCallback((config: GameConfig) => {
     analysesRef.current.clear();
     inflightRef.current.clear();
@@ -276,6 +296,11 @@ export function useChessVsBot() {
 
   const jumpTo = useCallback(
     (cursor: number) => dispatch({ type: "SET_CURSOR", cursor }),
+    [],
+  );
+
+  const selectMove = useCallback(
+    (index: number) => dispatch({ type: "SELECT_MOVE", index }),
     [],
   );
 
@@ -377,6 +402,7 @@ export function useChessVsBot() {
     analyses,
     assessments,
     tipPly,
+    tipIndex,
     tipAssessment,
     playerStats,
     // history
@@ -388,9 +414,11 @@ export function useChessVsBot() {
     // actions
     newGame,
     makeUserMove,
+    playAlternative,
     undo,
     redo,
     jumpTo,
+    selectMove,
     setHints,
     setLevel,
     resign,

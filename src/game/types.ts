@@ -86,6 +86,9 @@ export interface GameState {
   startFen: string;
   history: Ply[];
   cursor: number; // number of plies applied (0..history.length)
+  /** Move explicitly selected for review in the move list (index), or null to
+   *  follow the live default (focus the player's latest move). */
+  selected: number | null;
   playerColor: Color;
   level: LevelId;
   showHints: boolean;

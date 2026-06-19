@@ -36,7 +36,7 @@ function MoveButton({
     textAlign: "left",
   };
   return (
-    <button style={btn} onClick={() => game.jumpTo(index + 1)}>
+    <button data-testid={`move-${index}`} style={btn} onClick={() => game.selectMove(index)}>
       <span
         title={ply.color === "w" ? "Białe" : "Czarne"}
         style={{
