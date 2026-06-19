@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { Board } from "./components/Board";
 import { Controls } from "./components/Controls";
 import { EvalBar } from "./components/EvalBar";
+import { GameOverModal } from "./components/GameOverModal";
 import { MoveList } from "./components/MoveList";
 import { PlayerStrip } from "./components/PlayerStrip";
 import { SetupScreen } from "./components/SetupScreen";
@@ -32,20 +33,13 @@ const cardCaption: CSSProperties = {
   fontWeight: 600,
 };
 
-function resultText(game: ChessVsBot): string {
-  if (game.result) {
-    if (game.result.kind === "checkmate") {
-      return game.result.winner === game.playerColor
-        ? "Szach-mat — wygrywasz! 🎉"
-        : "Szach-mat — przegrywasz.";
-    }
-    return "Remis.";
-  }
-  return "Poddano partię.";
-}
-
 function GameScreen({ game }: { game: ChessVsBot }) {
   const [flipped, setFlipped] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  // Re-show the end-game modal whenever a fresh game-over happens.
+  useEffect(() => {
+    if (game.status !== "gameover") setReviewing(false);
+  }, [game.status]);
   const orientation: Color = flipped
     ? game.playerColor === "w"
       ? "b"
@@ -255,75 +249,8 @@ function GameScreen({ game }: { game: ChessVsBot }) {
         </div>
       </div>
 
-      {game.status === "gameover" && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 50,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(0,0,0,.6)",
-            padding: 16,
-          }}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: 380,
-              ...sideCard,
-              padding: 24,
-              textAlign: "center",
-              boxShadow: "0 20px 60px rgba(0,0,0,.5)",
-            }}
-          >
-            <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>{resultText(game)}</h2>
-            <p style={{ marginTop: 8, fontSize: 13, color: "#9AA3AF" }}>
-              {game.history.length} półruchów rozegranych.
-            </p>
-            <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
-              <button
-                onClick={() =>
-                  game.newGame({
-                    playerColor: game.playerColor,
-                    level: game.level,
-                    showHints: game.showHints,
-                  })
-                }
-                style={{
-                  flex: 1,
-                  height: 44,
-                  borderRadius: 8,
-                  border: "none",
-                  background: "#6C8CFF",
-                  color: "#0E1116",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Zagraj ponownie
-              </button>
-              <button
-                onClick={game.backToSetup}
-                style={{
-                  flex: 1,
-                  height: 44,
-                  borderRadius: 8,
-                  border: "1px solid #232833",
-                  background: "#171A21",
-                  color: "#E8EAED",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Zmień ustawienia
-              </button>
-            </div>
-          </div>
-        </div>
+      {game.status === "gameover" && !reviewing && (
+        <GameOverModal game={game} onDismiss={() => setReviewing(true)} />
       )}
     </div>
   );

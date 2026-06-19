@@ -37,6 +37,14 @@ export function winProbability(cp: number): number {
   return 1 / (1 + Math.pow(10, -cp / 400));
 }
 
+/** Per-move accuracy (0..100) from the drop in win% it caused (Lichess-style).
+ *  `winBefore`/`winAfter` are win percentages (0..100) from the mover's POV. */
+export function moveAccuracy(winBefore: number, winAfter: number): number {
+  const loss = Math.max(0, winBefore - winAfter);
+  const acc = 103.1668 * Math.exp(-0.04354 * loss) - 3.1669;
+  return Math.max(0, Math.min(100, acc));
+}
+
 /** Centipawn-loss thresholds for move classification (tunable). */
 export const QUALITY_THRESHOLDS = {
   best: 10,

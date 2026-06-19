@@ -5,6 +5,7 @@ import {
   assessMove,
   evalToNumber,
   lineToEval,
+  moveAccuracy,
   negateEval,
   winProbability,
 } from "../engine/evaluate";
@@ -22,10 +23,17 @@ import type {
   GameConfig,
   LevelId,
   MoveAssessment,
+  MoveQuality,
   PieceSymbol,
   Ply,
   Square,
 } from "./types";
+
+export interface PlayerStats {
+  accuracy: number | null;
+  assessed: number;
+  counts: Record<MoveQuality, number>;
+}
 
 const ANALYSIS_DEPTH = 14;
 const ANALYSIS_MULTIPV = 3;
@@ -291,6 +299,11 @@ export function useChessVsBot() {
     [],
   );
 
+  const resume = useCallback(
+    () => dispatch({ type: "SET_STATUS", status: "playing" }),
+    [],
+  );
+
   // --- evaluation for the bar ----------------------------------------------
   const currentAnalysis = analyses[fen];
   const { evalWhite, evalWhiteCp, winProb } = useMemo(() => {
@@ -312,6 +325,30 @@ export function useChessVsBot() {
   }, [currentAnalysis, turn]);
 
   const tipAssessment = tipPly ? assessments[tipPly.after] ?? null : null;
+
+  // Aggregate stats over the player's own moves (for the end-game summary).
+  const playerStats = useMemo<PlayerStats>(() => {
+    const counts: Record<MoveQuality, number> = {
+      best: 0,
+      good: 0,
+      inaccuracy: 0,
+      mistake: 0,
+      blunder: 0,
+    };
+    let sum = 0;
+    let n = 0;
+    for (const ply of state.history) {
+      if (ply.color !== state.playerColor) continue;
+      const a = assessments[ply.after];
+      if (!a) continue;
+      counts[a.quality] += 1;
+      const wb = winProbability(evalToNumber(a.evalBefore)) * 100;
+      const wa = winProbability(evalToNumber(a.evalAfter)) * 100;
+      sum += moveAccuracy(wb, wa);
+      n += 1;
+    }
+    return { accuracy: n ? Math.round(sum / n) : null, assessed: n, counts };
+  }, [state.history, state.playerColor, assessments]);
 
   const minPlayerCursor = state.playerColor === "w" ? 0 : 1;
 
@@ -341,6 +378,7 @@ export function useChessVsBot() {
     assessments,
     tipPly,
     tipAssessment,
+    playerStats,
     // history
     history: state.history,
     cursor: state.cursor,
@@ -357,6 +395,7 @@ export function useChessVsBot() {
     setLevel,
     resign,
     backToSetup,
+    resume,
   };
 }
 

@@ -66,6 +66,8 @@ export interface Level {
   id: LevelId;
   label: string;
   description: string;
+  /** Short ELO label for the UI, e.g. "ok. 1700 ELO". */
+  eloLabel: string;
   /** Target Elo via UCI_Elo, or null for full strength. */
   elo: number | null;
   /** How long/deep the bot thinks for its own move. */

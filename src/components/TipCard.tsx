@@ -115,6 +115,8 @@ export function TipCard({ game }: { game: ChessVsBot }) {
   const bestSan = a.bestSan ? polishSan(a.bestSan) : "—";
   // A "best" move's residual loss is just eval noise between two searches.
   const lossDisplay = a.quality === "best" ? 0 : a.cpLoss;
+  // Mate swings produce a huge sentinel loss — show "−∞" instead of "−999.3".
+  const lossText = lossDisplay >= 5000 ? "−∞" : formatLoss(lossDisplay);
 
   return (
     <Shell>
@@ -175,7 +177,7 @@ export function TipCard({ game }: { game: ChessVsBot }) {
               color: lossDisplay > 0 ? meta.color : "#5DBB63",
             }}
           >
-            {formatLoss(lossDisplay)}
+            {lossText}
           </div>
         </div>
       </div>
