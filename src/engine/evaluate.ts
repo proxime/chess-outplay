@@ -120,11 +120,16 @@ export function assessMove(params: AssessParams): MoveAssessment {
 /** Human-facing Polish labels and token colors for each quality. */
 export const QUALITY_META: Record<
   MoveQuality,
-  { label: string; symbol: string; color: string }
+  { label: string; symbol: string; color: string; pill: string }
 > = {
-  best: { label: "Najlepszy ruch", symbol: "★", color: "#21C7A8" },
-  good: { label: "Dobry ruch", symbol: "✓", color: "#5DBB63" },
-  inaccuracy: { label: "Niedokładność", symbol: "?!", color: "#E0A800" },
-  mistake: { label: "Błąd", symbol: "?", color: "#F08C2E" },
-  blunder: { label: "Gafa", symbol: "??", color: "#E5484D" },
+  best: { label: "Najlepszy ruch", symbol: "★", color: "#21C7A8", pill: "Brawo!" },
+  good: { label: "Dobry ruch", symbol: "✓", color: "#5DBB63", pill: "Dobrze" },
+  inaccuracy: {
+    label: "Niedokładność",
+    symbol: "?!",
+    color: "#E0A800",
+    pill: "Łagodna sugestia",
+  },
+  mistake: { label: "Błąd", symbol: "?", color: "#F08C2E", pill: "Do poprawy" },
+  blunder: { label: "Gafa", symbol: "??", color: "#E5484D", pill: "Uwaga!" },
 };

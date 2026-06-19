@@ -1,6 +1,6 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { QUALITY_META, negateEval } from "../engine/evaluate";
-import { figurine, formatEval, formatLoss, qualityComment } from "../format";
+import { formatEval, formatLoss, polishSan, qualityComment } from "../format";
 import type { EvalScore } from "../game/types";
 import type { ChessVsBot } from "../game/useChessVsBot";
 
@@ -10,13 +10,12 @@ const card: CSSProperties = {
   borderRadius: 12,
   padding: 18,
 };
-const header: CSSProperties = {
-  fontSize: 11,
+const caption: CSSProperties = {
+  fontSize: 10,
   textTransform: "uppercase",
-  letterSpacing: ".09em",
+  letterSpacing: ".07em",
   color: "#9AA3AF",
   fontWeight: 600,
-  marginBottom: 14,
 };
 const innerBox: CSSProperties = {
   flex: 1,
@@ -24,13 +23,6 @@ const innerBox: CSSProperties = {
   border: "1px solid #232833",
   borderRadius: 10,
   padding: "10px 13px",
-};
-const boxLabel: CSSProperties = {
-  fontSize: 10,
-  textTransform: "uppercase",
-  letterSpacing: ".07em",
-  color: "#9AA3AF",
-  fontWeight: 600,
 };
 
 function Badge({ glyph, color, bg }: { glyph: string; color: string; bg: string }) {
@@ -56,159 +48,180 @@ function Badge({ glyph, color, bg }: { glyph: string; color: string; bg: string 
   );
 }
 
+function Shell({ children }: { children: ReactNode }) {
+  return <div style={card}>{children}</div>;
+}
+
 export function TipCard({ game }: { game: ChessVsBot }) {
   if (!game.showHints) {
     return (
-      <div style={card}>
-        <div style={header}>Ocena ostatniego ruchu</div>
+      <Shell>
         <div style={{ fontSize: 13.5, color: "#9AA3AF" }}>
           Podpowiedzi są wyłączone.
         </div>
-      </div>
+      </Shell>
     );
   }
 
-  // No moves yet → start position.
-  if (game.cursor === 0) {
+  const ply = game.tipPly;
+  if (!ply) {
     return (
-      <div style={card}>
-        <div style={header}>Ocena ostatniego ruchu</div>
+      <Shell>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <Badge glyph="•" color="#9AA3AF" bg="#232833" />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: "#E8EAED" }}>
-              Pozycja startowa
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>Pozycja startowa</div>
+            <div style={{ fontSize: 13, color: "#9AA3AF", marginTop: 2 }}>
+              Wykonaj ruch, aby zobaczyć jego ocenę.
             </div>
-            <div style={{ fontSize: 13, color: "#9AA3AF", marginTop: 2 }}>—</div>
           </div>
         </div>
-        <div style={{ marginTop: 14, fontSize: 13.5, lineHeight: 1.55, color: "#9AA3AF" }}>
-          Wykonaj ruch, aby zobaczyć jego ocenę.
-        </div>
-      </div>
+      </Shell>
     );
   }
 
-  const lastPly = game.history[game.cursor - 1];
-  const moverIsPlayer = lastPly.color === game.playerColor;
-  const moveNo = Math.ceil(game.cursor / 2);
-  const moveText = `${moveNo}${lastPly.color === "w" ? ". " : "… "}${figurine(
-    lastPly.san,
-    lastPly.color,
-  )}`;
+  const moverIsPlayer = ply.color === game.playerColor;
+  const moveLabel = moverIsPlayer ? "Twój ruch" : "Ruch bota";
+  const moveSan = polishSan(ply.san);
+  const a = game.tipAssessment;
 
-  const a = game.currentAssessment;
-
-  // Analysis still running.
   if (!a) {
     return (
-      <div style={card}>
-        <div style={header}>Ocena ostatniego ruchu</div>
+      <Shell>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <Badge glyph="…" color="#9AA3AF" bg="#232833" />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{ fontSize: 16, fontWeight: 600, color: "#E8EAED" }}
-              className="animate-pulse"
-            >
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 600 }} className="animate-pulse">
               Analizuję…
             </div>
             <div style={{ fontSize: 13, color: "#9AA3AF", marginTop: 2 }}>
-              {moverIsPlayer ? "Twój ruch" : "Ruch bota"}: {moveText}
+              {moveLabel}: {moveSan}
             </div>
           </div>
         </div>
-      </div>
+      </Shell>
     );
   }
 
   const meta = QUALITY_META[a.quality];
-  const bad =
-    a.quality === "inaccuracy" || a.quality === "mistake" || a.quality === "blunder";
-
-  // best move eval, converted to White's POV for consistency with the bar.
-  const bestEvalWhite: EvalScore =
-    lastPly.color === "w" ? a.evalBefore : negateEval(a.evalBefore);
+  const toWhite = (e: EvalScore): EvalScore =>
+    ply.color === "w" ? e : negateEval(e);
+  const posEval = toWhite(a.evalAfter);
+  const bestEval = toWhite(a.evalBefore);
+  const bestSan = a.bestSan ? polishSan(a.bestSan) : "—";
+  // A "best" move's residual loss is just eval noise between two searches.
+  const lossDisplay = a.quality === "best" ? 0 : a.cpLoss;
 
   return (
-    <div style={card}>
-      <div style={header}>Ocena ostatniego ruchu</div>
-
+    <Shell>
+      {/* header */}
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <Badge glyph={meta.symbol} color={meta.color} bg={meta.color + "22"} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 600, color: meta.color }}>
-            {meta.label}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 16, fontWeight: 700, color: meta.color }}>
+              {meta.label}
+            </span>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: meta.color,
+                background: meta.color + "22",
+                borderRadius: 999,
+                padding: "2px 9px",
+              }}
+            >
+              {meta.pill}
+            </span>
           </div>
-          <div
-            style={{
-              fontSize: 13,
-              color: "#9AA3AF",
-              marginTop: 2,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {moverIsPlayer ? "Twój ruch" : "Ruch bota"}: {moveText}
+          <div style={{ fontSize: 13, color: "#9AA3AF", marginTop: 3 }}>
+            {moveLabel}: <span style={{ color: "#E8EAED", fontWeight: 600 }}>{moveSan}</span>
           </div>
         </div>
       </div>
 
+      {/* eval + loss */}
       <div style={{ display: "flex", gap: 10, marginTop: 15 }}>
         <div style={innerBox}>
-          <div style={boxLabel}>Ocena pozycji</div>
+          <div style={caption}>Ocena</div>
           <div
             style={{
-              fontSize: 19,
+              fontSize: 22,
               fontWeight: 700,
               fontVariantNumeric: "tabular-nums",
               marginTop: 3,
               color: "#E8EAED",
             }}
           >
-            {formatEval(game.evalWhite)}
+            {formatEval(posEval)}
           </div>
         </div>
-        {bad && a.cpLoss > 0 && (
-          <div style={innerBox}>
-            <div style={boxLabel}>Strata</div>
-            <div
-              style={{
-                fontSize: 19,
-                fontWeight: 700,
-                fontVariantNumeric: "tabular-nums",
-                marginTop: 3,
-                color: meta.color,
-              }}
-            >
-              {formatLoss(a.cpLoss)}
-            </div>
+        <div style={innerBox}>
+          <div style={caption}>Strata</div>
+          <div
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              fontVariantNumeric: "tabular-nums",
+              marginTop: 3,
+              color: lossDisplay > 0 ? meta.color : "#5DBB63",
+            }}
+          >
+            {formatLoss(lossDisplay)}
           </div>
-        )}
+        </div>
       </div>
 
-      {bad && a.bestSan ? (
-        <div
-          style={{
-            marginTop: 14,
-            background: "#0E1116",
-            border: "1px solid #232833",
-            borderRadius: 10,
-            padding: "13px 14px",
-            lineHeight: 1.55,
-          }}
-        >
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: "#6C8CFF" }}>
-            Lepszy był {a.bestSan} ({formatEval(bestEvalWhite)}).
-          </span>{" "}
-          <span style={{ fontSize: 13.5, color: "#C2C7CF" }}>
-            {qualityComment(a.quality)}
+      {/* engine best move */}
+      <div
+        style={{
+          marginTop: 14,
+          background: "#0E1116",
+          border: "1px solid #232833",
+          borderRadius: 10,
+          padding: "12px 14px",
+        }}
+      >
+        <div style={{ ...caption, marginBottom: 6 }}>Najlepszy ruch wg silnika</div>
+        <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>
+          <span style={{ color: "#21C7A8", fontWeight: 700 }}>
+            {bestSan} ({formatEval(bestEval)})
           </span>
+          <span style={{ color: "#C2C7CF" }}> — {qualityComment(a.quality)}</span>
         </div>
-      ) : (
-        <div style={{ marginTop: 14, fontSize: 13.5, lineHeight: 1.55, color: "#9AA3AF" }}>
-          {qualityComment(a.quality)}
+      </div>
+
+      {/* alternatives */}
+      {a.alternatives.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ ...caption, marginBottom: 8 }}>Alternatywy</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {a.alternatives.map((alt, i) => {
+              const ev = formatEval(toWhite(alt.eval));
+              const highlight = i === 0;
+              return (
+                <span
+                  key={alt.uci}
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    fontVariantNumeric: "tabular-nums",
+                    padding: "5px 10px",
+                    borderRadius: 8,
+                    border: `1px solid ${highlight ? "#21C7A8" : "#232833"}`,
+                    background: highlight ? "#21C7A822" : "#0E1116",
+                    color: highlight ? "#21C7A8" : "#E8EAED",
+                  }}
+                >
+                  {polishSan(alt.san)}{" "}
+                  <span style={{ color: highlight ? "#21C7A8" : "#9AA3AF" }}>{ev}</span>
+                </span>
+              );
+            })}
+          </div>
         </div>
       )}
-    </div>
+    </Shell>
   );
 }

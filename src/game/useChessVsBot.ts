@@ -277,10 +277,20 @@ export function useChessVsBot() {
     };
   }, [currentAnalysis, turn]);
 
-  const currentAssessment =
-    state.cursor > 0
-      ? assessments[state.history[state.cursor - 1].after] ?? null
-      : null;
+  // Which move the tip card focuses on. At the live edge we prefer the
+  // player's most recent move over the bot's instant reply, so you can always
+  // read the evaluation of YOUR move. While reviewing, it follows the cursor.
+  const tipIndex = (() => {
+    if (state.cursor === 0) return -1;
+    const lastIdx = state.cursor - 1;
+    const last = state.history[lastIdx];
+    if (atLiveEdge && last.color !== state.playerColor && lastIdx >= 1) {
+      return lastIdx - 1;
+    }
+    return lastIdx;
+  })();
+  const tipPly = tipIndex >= 0 ? state.history[tipIndex] : null;
+  const tipAssessment = tipPly ? assessments[tipPly.after] ?? null : null;
 
   const minPlayerCursor = state.playerColor === "w" ? 0 : 1;
 
@@ -308,7 +318,8 @@ export function useChessVsBot() {
     // analysis / tips
     analyses,
     assessments,
-    currentAssessment,
+    tipPly,
+    tipAssessment,
     // history
     history: state.history,
     cursor: state.cursor,

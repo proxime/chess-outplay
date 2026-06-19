@@ -34,6 +34,23 @@ export function figurine(san: string, color: Color): string {
   return san;
 }
 
+// English -> Polish piece letters: kNight→Skoczek, Bishop→Goniec,
+// Rook→Wieża, Queen→Hetman, King→Król.
+const PL_PIECE: Record<string, string> = {
+  N: "S",
+  B: "G",
+  R: "W",
+  Q: "H",
+  K: "K",
+};
+
+/** Convert SAN like "Nf3" / "exd8=Q" into Polish notation "Sf3" / "exd8=H". */
+export function polishSan(san: string): string {
+  let s = san;
+  if (PL_PIECE[s[0]]) s = PL_PIECE[s[0]] + s.slice(1);
+  return s.replace(/=([NBRQ])/, (_, p: string) => "=" + PL_PIECE[p]);
+}
+
 /** Format an eval (White's POV) like "+1.2", "−0.4" or "#3" / "−#2". */
 export function formatEval(score: EvalScore): string {
   if (score.type === "mate") {
@@ -52,18 +69,19 @@ export function formatLoss(cpLoss: number): string {
   return "−" + (cpLoss / 100).toFixed(1);
 }
 
-/** A short, honest, generic Polish comment for a move quality. */
+/** A short, honest comment for the engine's best move, fitting the format
+ *  "SAN (eval) — <comment>". */
 export function qualityComment(quality: MoveQuality): string {
   switch (quality) {
     case "best":
-      return "Najlepszy ruch w tej pozycji.";
+      return "Idealnie — najmocniejsza kontynuacja w tej pozycji.";
     case "good":
-      return "Dobry, naturalny ruch — zgodny z planem.";
+      return "Solidny wybór, blisko najlepszego ruchu.";
     case "inaccuracy":
-      return "Niewielka strata — była dokładniejsza kontynuacja.";
+      return "Dokładniejsza kontynuacja, utrzymuje inicjatywę.";
     case "mistake":
-      return "Ten ruch oddaje część przewagi.";
+      return "Zachowuje przewagę — Twój ruch częściowo ją oddał.";
     case "blunder":
-      return "Poważny błąd — pozycja znacząco się pogorszyła.";
+      return "Należało to zagrać, aby uniknąć poważnej straty.";
   }
 }
