@@ -59,6 +59,8 @@ export function SetupScreen({ game }: { game: ChessVsBot }) {
         style={{
           width: "100%",
           maxWidth: 500,
+          maxHeight: "calc(100vh - 40px)",
+          overflowY: "auto",
           background: "#171A21",
           border: "1px solid #2c3445",
           borderRadius: 16,
@@ -200,13 +202,13 @@ export function SetupScreen({ game }: { game: ChessVsBot }) {
                   <span style={{ fontSize: 14, fontWeight: 600, color: "#E8EAED" }}>
                     {l.label}
                   </span>
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 16 }}>
-                    {[0, 1, 2, 3].map((j) => (
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 16 }}>
+                    {LEVEL_LIST.map((_, j) => (
                       <div
                         key={j}
                         style={{
-                          width: 4,
-                          height: 6 + j * 3,
+                          width: 3,
+                          height: 5 + j * 2,
                           borderRadius: 2,
                           background:
                             j < filled ? (sel ? ACCENT : "#7a86a8") : "#2a3140",

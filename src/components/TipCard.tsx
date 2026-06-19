@@ -214,7 +214,7 @@ export function TipCard({ game }: { game: ChessVsBot }) {
           >
             <span>Alternatywy</span>
             <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500 }}>
-              kliknij, aby rozegrać
+              najedź = podgląd · klik = rozegraj
             </span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -227,7 +227,9 @@ export function TipCard({ game }: { game: ChessVsBot }) {
                   key={alt.uci}
                   data-testid={`alt-${i}`}
                   onClick={() => game.playAlternative(game.tipIndex, alt.uci)}
-                  title={played ? "Zagrany ruch — kliknij, aby powtórzyć" : "Rozegraj ten wariant"}
+                  onMouseEnter={() => game.setPreview(alt.uci)}
+                  onMouseLeave={() => game.setPreview(null)}
+                  title={played ? "Zagrany ruch — kliknij, aby powtórzyć" : "Najedź, by podejrzeć · kliknij, by rozegrać"}
                   className="hover:brightness-125"
                   style={{
                     fontSize: 13,

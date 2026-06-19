@@ -51,6 +51,8 @@ export function useChessVsBot() {
   const analysisRef = useRef<StockfishEngine | null>(null);
   const [engineReady, setEngineReady] = useState(false);
   const [thinking, setThinking] = useState(false);
+  const [previewUci, setPreviewUci] = useState<string | null>(null);
+  const setPreview = useCallback((uci: string | null) => setPreviewUci(uci), []);
 
   // Analysis cache (ref for logic, state mirror for rendering).
   const analysesRef = useRef<Map<string, Analysis>>(new Map());
@@ -117,6 +119,33 @@ export function useChessVsBot() {
     return state.cursor - 1;
   })();
   const tipPly = tipIndex >= 0 ? state.history[tipIndex] : null;
+
+  // Hover preview: show the position that an alternative move would produce,
+  // without committing to it.
+  const preview = useMemo(() => {
+    if (!previewUci || tipIndex < 0) return null;
+    const base = positionAt(state.startFen, state.history, tipIndex);
+    try {
+      const m = base.move({
+        from: previewUci.slice(0, 2) as Square,
+        to: previewUci.slice(2, 4) as Square,
+        promotion: (previewUci.slice(4, 5) || undefined) as PieceSymbol | undefined,
+      });
+      if (!m) return null;
+      return { chess: base, from: m.from, to: m.to };
+    } catch {
+      return null;
+    }
+  }, [previewUci, tipIndex, state.history, state.startFen]);
+
+  const displayChess = preview ? preview.chess : chess;
+  const displayLastMove = preview
+    ? { from: preview.from, to: preview.to }
+    : lastMove;
+  const isPreviewing = preview !== null;
+
+  // Drop any hover preview as soon as the real position changes.
+  useEffect(() => setPreviewUci(null), [fen]);
 
   // --- engine cache helper --------------------------------------------------
   const ensureAnalysis = useCallback(
@@ -248,6 +277,7 @@ export function useChessVsBot() {
   // Branch the game: replay the position before ply #index, play `uci` there
   // instead, and continue. Lets you explore an alternative (incl. the bot's).
   const playAlternative = useCallback((index: number, uci: string) => {
+    setPreviewUci(null);
     const s = stateRef.current;
     const pos = positionAt(s.startFen, s.history, index);
     const ply = tryMove(
@@ -387,6 +417,11 @@ export function useChessVsBot() {
     lastMove,
     result,
     material,
+    // hover preview
+    displayChess,
+    displayLastMove,
+    isPreviewing,
+    setPreview,
     // engine
     engineReady,
     thinking,

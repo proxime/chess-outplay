@@ -60,7 +60,13 @@ export interface MoveAssessment {
   alternatives: { uci: string; san: string; eval: EvalScore }[];
 }
 
-export type LevelId = "beginner" | "intermediate" | "advanced" | "master";
+export type LevelId =
+  | "beginner"
+  | "intermediate"
+  | "advanced"
+  | "expert"
+  | "master"
+  | "grandmaster";
 
 export interface Level {
   id: LevelId;

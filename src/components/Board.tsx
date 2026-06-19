@@ -37,8 +37,12 @@ export function Board({
 }) {
   const [selected, setSelected] = useState<Square | null>(null);
   useEffect(() => setSelected(null), [game.fen]);
+  // Hovering an alternative previews a hypothetical position — drop any selection.
+  useEffect(() => {
+    if (game.isPreviewing) setSelected(null);
+  }, [game.isPreviewing]);
 
-  const board = game.chess.board();
+  const board = game.displayChess.board();
 
   const cells = useMemo<Cell[]>(() => {
     const out: Cell[] = [];
@@ -80,6 +84,7 @@ export function Board({
   }
 
   function handleClick(cell: Cell) {
+    if (game.isPreviewing) return;
     if (selected && targets.has(cell.square)) {
       attemptMove(selected, cell.square);
       setSelected(null);
@@ -92,10 +97,11 @@ export function Board({
     setSelected(null);
   }
 
-  const lastFrom = game.lastMove?.from;
-  const lastTo = game.lastMove?.to;
-  const checkSquare =
-    game.inCheck ? findKing(cells, game.turn) : null;
+  const lastFrom = game.displayLastMove?.from;
+  const lastTo = game.displayLastMove?.to;
+  const checkSquare = game.displayChess.inCheck()
+    ? findKing(cells, game.displayChess.turn())
+    : null;
 
   return (
     <div
@@ -190,9 +196,9 @@ export function Board({
             )}
             {cell.piece && (
               <span
-                draggable={canPlayerPick(cell.piece.color)}
+                draggable={!game.isPreviewing && canPlayerPick(cell.piece.color)}
                 onDragStart={(e) => {
-                  if (cell.piece && canPlayerPick(cell.piece.color)) {
+                  if (!game.isPreviewing && cell.piece && canPlayerPick(cell.piece.color)) {
                     setSelected(cell.square);
                   } else {
                     e.preventDefault();
