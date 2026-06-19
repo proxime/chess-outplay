@@ -91,7 +91,11 @@ export function TipCard({ game }: { game: ChessVsBot }) {
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <Badge glyph="…" color="#9AA3AF" bg="#232833" />
           <div>
-            <div style={{ fontSize: 16, fontWeight: 600 }} className="animate-pulse">
+            <div
+              style={{ fontSize: 16, fontWeight: 600 }}
+              className="animate-pulse"
+              data-testid="tip-analyzing"
+            >
               Analizuję…
             </div>
             <div style={{ fontSize: 13, color: "#9AA3AF", marginTop: 2 }}>
@@ -119,7 +123,10 @@ export function TipCard({ game }: { game: ChessVsBot }) {
         <Badge glyph={meta.symbol} color={meta.color} bg={meta.color + "22"} />
         <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 16, fontWeight: 700, color: meta.color }}>
+            <span
+              style={{ fontSize: 16, fontWeight: 700, color: meta.color }}
+              data-testid="tip-quality"
+            >
               {meta.label}
             </span>
             <span

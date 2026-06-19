@@ -23,6 +23,7 @@ import type {
   LevelId,
   MoveAssessment,
   PieceSymbol,
+  Ply,
   Square,
 } from "./types";
 
@@ -54,6 +55,8 @@ export function useChessVsBot() {
   );
 
   const requestedRef = useRef<string>("");
+  const mountedRef = useRef(true);
+  useEffect(() => () => void (mountedRef.current = false), []);
 
   // --- engine lifecycle -----------------------------------------------------
   useEffect(() => {
@@ -94,6 +97,20 @@ export function useChessVsBot() {
         }
       : null;
 
+  // Which move the tip card focuses on. At the live edge we prefer the
+  // player's most recent move over the bot's instant reply, so you can always
+  // read the evaluation of YOUR move. While reviewing, it follows the cursor.
+  const tipIndex = (() => {
+    if (state.cursor === 0) return -1;
+    const lastIdx = state.cursor - 1;
+    const last = state.history[lastIdx];
+    if (atLiveEdge && last.color !== state.playerColor && lastIdx >= 1) {
+      return lastIdx - 1;
+    }
+    return lastIdx;
+  })();
+  const tipPly = tipIndex >= 0 ? state.history[tipIndex] : null;
+
   // --- engine cache helper --------------------------------------------------
   const ensureAnalysis = useCallback(
     (target: string): Promise<Analysis | null> => {
@@ -115,6 +132,33 @@ export function useChessVsBot() {
       return p;
     },
     [],
+  );
+
+  // Compute & cache a move's assessment. Idempotent and resilient to effect
+  // re-runs (e.g. the bot replying before our move's analysis finishes) — it
+  // only bails on unmount, never skipping the write.
+  const assessPly = useCallback(
+    async (ply: Ply): Promise<void> => {
+      if (assessmentsRef.current.has(ply.after)) return;
+      const [parent, child] = await Promise.all([
+        ensureAnalysis(ply.before),
+        ensureAnalysis(ply.after),
+      ]);
+      if (!parent || !child || assessmentsRef.current.has(ply.after)) return;
+      const a = assessMove({
+        parent,
+        child,
+        playedUci: ply.uci,
+        toSan: uciToSan,
+      });
+      assessmentsRef.current.set(ply.after, a);
+      if (mountedRef.current) {
+        setAssessments((prev) =>
+          prev[ply.after] ? prev : { ...prev, [ply.after]: a },
+        );
+      }
+    },
+    [ensureAnalysis],
   );
 
   // Apply a move from the current cursor position (used by both player & bot).
@@ -166,31 +210,21 @@ export function useChessVsBot() {
   // --- analysis & move assessment ------------------------------------------
   useEffect(() => {
     if (!engineReady || !state.showHints) return;
-    let cancelled = false;
-    ensureAnalysis(fen);
+    ensureAnalysis(fen); // current position eval (for the bar)
     if (state.cursor > 0) {
-      const last = state.history[state.cursor - 1];
-      if (!assessmentsRef.current.has(last.after)) {
-        Promise.all([
-          ensureAnalysis(last.before),
-          ensureAnalysis(last.after),
-        ]).then(([parent, child]) => {
-          if (cancelled || !parent || !child) return;
-          const a = assessMove({
-            parent,
-            child,
-            playedUci: last.uci,
-            toSan: uciToSan,
-          });
-          assessmentsRef.current.set(last.after, a);
-          setAssessments((prev) => ({ ...prev, [last.after]: a }));
-        });
-      }
+      assessPly(state.history[state.cursor - 1]); // latest move (list badge)
     }
-    return () => {
-      cancelled = true;
-    };
-  }, [engineReady, state.showHints, fen, state.cursor, state.history, ensureAnalysis]);
+    if (tipPly) assessPly(tipPly); // the move shown in the tip card
+  }, [
+    engineReady,
+    state.showHints,
+    fen,
+    state.cursor,
+    state.history,
+    tipPly,
+    ensureAnalysis,
+    assessPly,
+  ]);
 
   // --- actions --------------------------------------------------------------
   const makeUserMove = useCallback(
@@ -277,19 +311,6 @@ export function useChessVsBot() {
     };
   }, [currentAnalysis, turn]);
 
-  // Which move the tip card focuses on. At the live edge we prefer the
-  // player's most recent move over the bot's instant reply, so you can always
-  // read the evaluation of YOUR move. While reviewing, it follows the cursor.
-  const tipIndex = (() => {
-    if (state.cursor === 0) return -1;
-    const lastIdx = state.cursor - 1;
-    const last = state.history[lastIdx];
-    if (atLiveEdge && last.color !== state.playerColor && lastIdx >= 1) {
-      return lastIdx - 1;
-    }
-    return lastIdx;
-  })();
-  const tipPly = tipIndex >= 0 ? state.history[tipIndex] : null;
   const tipAssessment = tipPly ? assessments[tipPly.after] ?? null : null;
 
   const minPlayerCursor = state.playerColor === "w" ? 0 : 1;
