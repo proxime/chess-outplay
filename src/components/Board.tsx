@@ -18,12 +18,14 @@ interface Cell {
 }
 
 const whitePieceStyle: CSSProperties = {
-  color: "#F7F8FA",
+  color: "#FCFCFD",
+  WebkitTextStroke: "1.2px #3c424c",
   textShadow: "0 2px 3px rgba(0,0,0,.45)",
 };
 const blackPieceStyle: CSSProperties = {
-  color: "#2B2F36",
-  textShadow: "0 1px 1px rgba(255,255,255,.10)",
+  color: "#23262C",
+  WebkitTextStroke: "1px #0c0e12",
+  textShadow: "0 1px 2px rgba(255,255,255,.12)",
 };
 
 export function Board({

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { QUALITY_META } from "../engine/evaluate";
 import { figurine } from "../format";
@@ -23,7 +24,7 @@ function MoveButton({
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-start",
-    gap: 2,
+    gap: 7,
     width: "100%",
     border: "none",
     background: selected ? ACCENT + "22" : "transparent",
@@ -36,6 +37,17 @@ function MoveButton({
   };
   return (
     <button style={btn} onClick={() => game.jumpTo(index + 1)}>
+      <span
+        title={ply.color === "w" ? "Białe" : "Czarne"}
+        style={{
+          width: 9,
+          height: 9,
+          borderRadius: "50%",
+          flex: "0 0 auto",
+          background: ply.color === "w" ? "#EDEDED" : "#454b56",
+          border: `1px solid ${ply.color === "w" ? "#c4c8cd" : "#20242b"}`,
+        }}
+      />
       <span>{figurine(ply.san, ply.color)}</span>
       {meta && (
         <span
@@ -61,6 +73,13 @@ export function MoveList({ game }: { game: ChessVsBot }) {
     rows.push({ no: i / 2 + 1, white: i, black: i + 1 });
   }
 
+  // Keep the latest move in view after each move is played.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [history.length]);
+
   return (
     <div
       style={{
@@ -83,7 +102,7 @@ export function MoveList({ game }: { game: ChessVsBot }) {
         <span style={{ fontSize: 11, color: "#9AA3AF" }}>kliknij, by zobaczyć ocenę</span>
       </div>
 
-      <div style={{ maxHeight: 300, overflowY: "auto" }}>
+      <div ref={scrollRef} style={{ maxHeight: 300, overflowY: "auto" }}>
         {rows.length === 0 && (
           <div style={{ padding: 16, fontSize: 13, color: "#9AA3AF" }}>
             Brak ruchów — zacznij grę!
