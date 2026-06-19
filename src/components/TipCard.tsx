@@ -80,9 +80,12 @@ export function TipCard({ game }: { game: ChessVsBot }) {
     );
   }
 
-  const moverIsPlayer = ply.color === game.playerColor;
-  const moveLabel = moverIsPlayer ? "Twój ruch" : "Ruch bota";
-  const moveSan = polishSan(ply.san);
+  const moveLabel = game.isPreviewing
+    ? "Podgląd"
+    : ply.color === game.playerColor
+      ? "Twój ruch"
+      : "Ruch bota";
+  const moveSan = polishSan(game.tipSan ?? ply.san);
   const a = game.tipAssessment;
 
   if (!a) {

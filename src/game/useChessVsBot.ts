@@ -3,6 +3,7 @@ import { StockfishEngine } from "../engine/engine";
 import { LEVELS } from "../engine/levels";
 import {
   assessMove,
+  classify,
   evalToNumber,
   lineToEval,
   moveAccuracy,
@@ -374,7 +375,37 @@ export function useChessVsBot() {
     };
   }, [currentAnalysis, turn]);
 
-  const tipAssessment = tipPly ? assessments[tipPly.after] ?? null : null;
+  // The assessment shown in the tip card. While hovering an alternative, it is
+  // synthesized for that alternative (from the parent's MultiPV lines) so the
+  // card temporarily reflects "how this move would score".
+  const tipAssessment = useMemo<MoveAssessment | null>(() => {
+    const base = tipPly ? assessments[tipPly.after] ?? null : null;
+    if (!base || !isPreviewing || !previewUci) return base;
+    const alt = base.alternatives.find((x) => x.uci === previewUci);
+    if (!alt) return base;
+    const cpLoss = Math.max(
+      0,
+      evalToNumber(base.evalBefore) - evalToNumber(alt.eval),
+    );
+    return {
+      ...base,
+      quality: classify(cpLoss, alt.uci, base.bestUci),
+      cpLoss,
+      playedUci: alt.uci,
+      evalAfter: alt.eval,
+    };
+  }, [tipPly, assessments, isPreviewing, previewUci]);
+
+  // SAN shown in the tip header (the hovered alternative while previewing).
+  const tipSan = useMemo(() => {
+    if (!tipPly) return null;
+    if (isPreviewing && previewUci) {
+      const base = assessments[tipPly.after];
+      const alt = base?.alternatives.find((x) => x.uci === previewUci);
+      if (alt) return alt.san;
+    }
+    return tipPly.san;
+  }, [tipPly, assessments, isPreviewing, previewUci]);
 
   // Aggregate stats over the player's own moves (for the end-game summary).
   const playerStats = useMemo<PlayerStats>(() => {
@@ -434,6 +465,7 @@ export function useChessVsBot() {
     tipPly,
     tipIndex,
     tipAssessment,
+    tipSan,
     playerStats,
     // history
     history: state.history,
