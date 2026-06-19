@@ -109,17 +109,12 @@ export function useChessVsBot() {
   // player's most recent move over the bot's instant reply, so you can always
   // read the evaluation of YOUR move. While reviewing, it follows the cursor.
   const tipIndex = (() => {
-    // Explicit move-list selection wins.
+    // Explicit move-list selection wins; otherwise show the latest move — so
+    // after the bot replies the card shows the bot's move and its alternatives.
     if (state.selected !== null && state.selected < state.history.length) {
       return state.selected;
     }
-    if (state.cursor === 0) return -1;
-    const lastIdx = state.cursor - 1;
-    const last = state.history[lastIdx];
-    if (atLiveEdge && last.color !== state.playerColor && lastIdx >= 1) {
-      return lastIdx - 1;
-    }
-    return lastIdx;
+    return state.cursor - 1;
   })();
   const tipPly = tipIndex >= 0 ? state.history[tipIndex] : null;
 
