@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "engine:smoke": "node scripts/engine-smoke-test.mjs",
     "engine:copy": "node scripts/copy-engine.mjs",
-    "screenshot": "node scripts/screenshot.mjs"
+    "screenshot": "node scripts/screenshot.mjs",
+    "build:extension": "vite build && node scripts/build-extension.mjs"
   },
   "dependencies": {
     "chess.js": "^1.4.0",

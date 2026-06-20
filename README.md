@@ -29,6 +29,7 @@ npm test             # testy jednostkowe logiki (vitest)
 npm run engine:smoke # headless test silnika (Node): czy zwraca bestmove
 npm run engine:copy  # odśwież pliki Stockfisha z node_modules do public/engine
 npm run screenshot   # zrzuty ekranu gry (wymaga: npx playwright install chromium)
+npm run build:extension # zbuduj wtyczkę do dist-extension/ (Wczytaj rozpakowane)
 ```
 
 ## Architektura
@@ -67,8 +68,25 @@ Vite wykrywany jest automatycznie (`buildCommand: npm run build`,
 `outputDirectory: dist`). Konfiguracja w `vercel.json`. Ponieważ silnik działa
 po stronie klienta, nie jest potrzebny żaden backend ani funkcje serverless.
 
+## Wtyczka do przeglądarki (Chrome / Edge)
+
+Ten sam kod działa jako rozszerzenie — pływający panel w rogu dowolnej strony.
+Apka żyje w `<iframe>` z origin rozszerzenia, więc silnik/WASM korzystają z CSP
+rozszerzenia (działa niezależnie od CSP odwiedzanej strony).
+
+```bash
+npm run build:extension      # tworzy folder dist-extension/
+```
+
+Następnie: `chrome://extensions` → włącz **Tryb dewelopera** → **Wczytaj
+rozpakowane** → wskaż folder `dist-extension/`. Panel otwierasz przyciskiem
+♞ w rogu strony lub ikoną rozszerzenia na pasku.
+
+Źródła rozszerzenia: `extension/` (`manifest.json`, `content.js`, `background.js`,
+`icons/`). Build kopiuje je razem z `dist/` do `dist-extension/`.
+
 ## Status
 
-Działający ekran gry z designem z Claude Design (desktop), spięty z silnikiem
-i pełną logiką. Do zrobienia: wariant mobilny oraz ekrany startu / końca partii
-(pozostałe makiety z Claude Design).
+Web (desktop + responsywny widok kompaktowy/mobilny) oraz wtyczka do przeglądarki
+(pływający panel) — wszystko spięte z silnikiem i pełną logiką, na bazie makiet
+z Claude Design.
