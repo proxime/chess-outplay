@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { Board } from "./components/Board";
+import { CompactGame } from "./components/CompactGame";
 import { Controls } from "./components/Controls";
 import { EvalBar } from "./components/EvalBar";
 import { GameOverModal } from "./components/GameOverModal";
@@ -33,6 +34,24 @@ const cardCaption: CSSProperties = {
   fontWeight: 600,
 };
 
+/** Layout mode: compact (extension panel / tablet) on small viewports, with a
+ *  stacked variant for very narrow ones (phones). */
+function useLayout(): { compact: boolean; narrow: boolean } {
+  const measure = () => ({
+    compact:
+      typeof window !== "undefined" &&
+      (window.innerWidth < 880 || window.innerHeight < 680),
+    narrow: typeof window !== "undefined" && window.innerWidth < 620,
+  });
+  const [layout, setLayout] = useState(measure);
+  useEffect(() => {
+    const onResize = () => setLayout(measure());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return layout;
+}
+
 function GameScreen({ game }: { game: ChessVsBot }) {
   const [flipped, setFlipped] = useState(false);
   const [reviewing, setReviewing] = useState(false);
@@ -40,11 +59,52 @@ function GameScreen({ game }: { game: ChessVsBot }) {
   useEffect(() => {
     if (game.status !== "gameover") setReviewing(false);
   }, [game.status]);
+
+  const { compact, narrow } = useLayout();
   const orientation: Color = flipped
     ? game.playerColor === "w"
       ? "b"
       : "w"
     : game.playerColor;
+  const onFlip = () => setFlipped((f) => !f);
+
+  return (
+    <>
+      {compact ? (
+        <div
+          style={{
+            height: "100vh",
+            background: "#0E1116",
+            color: "#E8EAED",
+            fontFamily: "Inter, system-ui, -apple-system, sans-serif",
+          }}
+        >
+          <CompactGame
+            game={game}
+            orientation={orientation}
+            onFlip={onFlip}
+            narrow={narrow}
+          />
+        </div>
+      ) : (
+        <DesktopGame game={game} orientation={orientation} onFlip={onFlip} />
+      )}
+      {game.status === "gameover" && !reviewing && (
+        <GameOverModal game={game} onDismiss={() => setReviewing(true)} />
+      )}
+    </>
+  );
+}
+
+function DesktopGame({
+  game,
+  orientation,
+  onFlip,
+}: {
+  game: ChessVsBot;
+  orientation: Color;
+  onFlip: () => void;
+}) {
   const opponent: Color = game.playerColor === "w" ? "b" : "w";
   const diff = game.material.diff;
   const matBig = diff > 0 ? `+${diff}` : diff < 0 ? `−${-diff}` : "0";
@@ -124,7 +184,7 @@ function GameScreen({ game }: { game: ChessVsBot }) {
             </select>
           </div>
           <button
-            onClick={() => setFlipped((f) => !f)}
+            onClick={onFlip}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -248,10 +308,6 @@ function GameScreen({ game }: { game: ChessVsBot }) {
           <MoveList game={game} />
         </div>
       </div>
-
-      {game.status === "gameover" && !reviewing && (
-        <GameOverModal game={game} onDismiss={() => setReviewing(true)} />
-      )}
     </div>
   );
 }

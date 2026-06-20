@@ -66,7 +66,13 @@ function MoveButton({
   );
 }
 
-export function MoveList({ game }: { game: ChessVsBot }) {
+export function MoveList({
+  game,
+  compact = false,
+}: {
+  game: ChessVsBot;
+  compact?: boolean;
+}) {
   const { history } = game;
   const rows: { no: number; white: number; black: number }[] = [];
   for (let i = 0; i < history.length; i += 2) {
@@ -87,22 +93,47 @@ export function MoveList({ game }: { game: ChessVsBot }) {
         border: "1px solid #232833",
         borderRadius: 12,
         overflow: "hidden",
+        ...(compact
+          ? { height: "100%", display: "flex", flexDirection: "column" }
+          : {}),
       }}
     >
       <div
         style={{
+          flex: "0 0 auto",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "13px 16px",
+          padding: compact ? "9px 13px" : "13px 16px",
           borderBottom: "1px solid #232833",
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 600 }}>Lista ruchów</span>
-        <span style={{ fontSize: 11, color: "#9AA3AF" }}>kliknij, by zobaczyć ocenę</span>
+        <span style={{ fontSize: compact ? 12 : 13, fontWeight: 600 }}>Lista ruchów</span>
+        {compact ? (
+          <div style={{ display: "flex", gap: 9 }}>
+            {Object.values(QUALITY_META).map((q) => (
+              <span
+                key={q.label}
+                title={q.label}
+                style={{ color: q.color, fontWeight: 700, fontSize: 12, fontVariantNumeric: "tabular-nums" }}
+              >
+                {q.symbol}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span style={{ fontSize: 11, color: "#9AA3AF" }}>kliknij, by zobaczyć ocenę</span>
+        )}
       </div>
 
-      <div ref={scrollRef} style={{ maxHeight: 300, overflowY: "auto" }}>
+      <div
+        ref={scrollRef}
+        style={
+          compact
+            ? { flex: 1, minHeight: 0, overflowY: "auto" }
+            : { maxHeight: 300, overflowY: "auto" }
+        }
+      >
         {rows.length === 0 && (
           <div style={{ padding: 16, fontSize: 13, color: "#9AA3AF" }}>
             Brak ruchów — zacznij grę!
@@ -113,17 +144,17 @@ export function MoveList({ game }: { game: ChessVsBot }) {
             key={row.no}
             style={{
               display: "grid",
-              gridTemplateColumns: "38px 1fr 1fr",
+              gridTemplateColumns: compact ? "32px 1fr 1fr" : "38px 1fr 1fr",
               alignItems: "center",
               borderBottom: "1px solid #1b1f27",
             }}
           >
             <span
               style={{
-                fontSize: 12,
+                fontSize: compact ? 11 : 12,
                 color: "#5b6470",
                 fontWeight: 600,
-                paddingLeft: 15,
+                paddingLeft: compact ? 13 : 15,
                 fontVariantNumeric: "tabular-nums",
               }}
             >
@@ -135,31 +166,33 @@ export function MoveList({ game }: { game: ChessVsBot }) {
         ))}
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 14,
-          flexWrap: "wrap",
-          padding: "11px 16px",
-          borderTop: "1px solid #232833",
-        }}
-      >
-        {Object.values(QUALITY_META).map((q) => (
-          <div key={q.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span
-              style={{
-                color: q.color,
-                fontWeight: 700,
-                fontSize: 13,
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              {q.symbol}
-            </span>
-            <span style={{ fontSize: 11, color: "#9AA3AF" }}>{q.label}</span>
-          </div>
-        ))}
-      </div>
+      {!compact && (
+        <div
+          style={{
+            display: "flex",
+            gap: 14,
+            flexWrap: "wrap",
+            padding: "11px 16px",
+            borderTop: "1px solid #232833",
+          }}
+        >
+          {Object.values(QUALITY_META).map((q) => (
+            <div key={q.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span
+                style={{
+                  color: q.color,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {q.symbol}
+              </span>
+              <span style={{ fontSize: 11, color: "#9AA3AF" }}>{q.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
