@@ -331,7 +331,7 @@ export function CompactGame({
               gap: 10,
             }}
           >
-            <TipCard game={game} />
+            <TipCard game={game} compact />
             <MoveList game={game} compact />
           </div>
           <Controls game={game} />

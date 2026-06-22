@@ -4,12 +4,6 @@ import { formatEval, formatLoss, polishSan, qualityComment } from "../format";
 import type { EvalScore } from "../game/types";
 import type { ChessVsBot } from "../game/useChessVsBot";
 
-const card: CSSProperties = {
-  background: "#171A21",
-  border: "1px solid #232833",
-  borderRadius: 12,
-  padding: 18,
-};
 const caption: CSSProperties = {
   fontSize: 10,
   textTransform: "uppercase",
@@ -25,17 +19,27 @@ const innerBox: CSSProperties = {
   padding: "10px 13px",
 };
 
-function Badge({ glyph, color, bg }: { glyph: string; color: string; bg: string }) {
+function Badge({
+  glyph,
+  color,
+  bg,
+  size,
+}: {
+  glyph: string;
+  color: string;
+  bg: string;
+  size: number;
+}) {
   return (
     <div
       style={{
-        width: 48,
-        height: 48,
+        width: size,
+        height: size,
         borderRadius: 12,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: 21,
+        fontSize: size < 46 ? 18 : 21,
         fontWeight: 700,
         background: bg,
         color,
@@ -48,11 +52,24 @@ function Badge({ glyph, color, bg }: { glyph: string; color: string; bg: string 
   );
 }
 
-function Shell({ children }: { children: ReactNode }) {
-  return <div style={card}>{children}</div>;
-}
+export function TipCard({
+  game,
+  compact = false,
+}: {
+  game: ChessVsBot;
+  compact?: boolean;
+}) {
+  const badgeSize = compact ? 40 : 48;
+  const card: CSSProperties = {
+    background: "#171A21",
+    border: "1px solid #232833",
+    borderRadius: 12,
+    padding: compact ? 13 : 18,
+  };
+  const Shell = ({ children }: { children: ReactNode }) => (
+    <div style={card}>{children}</div>
+  );
 
-export function TipCard({ game }: { game: ChessVsBot }) {
   if (!game.showHints) {
     return (
       <Shell>
@@ -67,10 +84,10 @@ export function TipCard({ game }: { game: ChessVsBot }) {
   if (!ply) {
     return (
       <Shell>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <Badge glyph="•" color="#9AA3AF" bg="#232833" />
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Badge glyph="•" color="#9AA3AF" bg="#232833" size={badgeSize} />
           <div>
-            <div style={{ fontSize: 16, fontWeight: 600 }}>Pozycja startowa</div>
+            <div style={{ fontSize: 15, fontWeight: 600 }}>Pozycja startowa</div>
             <div style={{ fontSize: 13, color: "#9AA3AF", marginTop: 2 }}>
               Wykonaj ruch, aby zobaczyć jego ocenę.
             </div>
@@ -91,11 +108,11 @@ export function TipCard({ game }: { game: ChessVsBot }) {
   if (!a) {
     return (
       <Shell>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <Badge glyph="…" color="#9AA3AF" bg="#232833" />
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Badge glyph="…" color="#9AA3AF" bg="#232833" size={badgeSize} />
           <div>
             <div
-              style={{ fontSize: 16, fontWeight: 600 }}
+              style={{ fontSize: 15, fontWeight: 600 }}
               className="animate-pulse"
               data-testid="tip-analyzing"
             >
@@ -116,87 +133,107 @@ export function TipCard({ game }: { game: ChessVsBot }) {
   const posEval = toWhite(a.evalAfter);
   const bestEval = toWhite(a.evalBefore);
   const bestSan = a.bestSan ? polishSan(a.bestSan) : "—";
-  // A "best" move's residual loss is just eval noise between two searches.
   const lossDisplay = a.quality === "best" ? 0 : a.cpLoss;
-  // Mate swings produce a huge sentinel loss — show "−∞" instead of "−999.3".
   const lossText = lossDisplay >= 5000 ? "−∞" : formatLoss(lossDisplay);
+  const lossColor = lossDisplay > 0 ? meta.color : "#5DBB63";
+
+  const labelRow = (
+    <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+      <span
+        style={{ fontSize: compact ? 15 : 16, fontWeight: 700, color: meta.color }}
+        data-testid="tip-quality"
+      >
+        {meta.label}
+      </span>
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: meta.color,
+          background: meta.color + "22",
+          borderRadius: 999,
+          padding: "2px 9px",
+        }}
+      >
+        {meta.pill}
+      </span>
+    </div>
+  );
+  const moveText = (
+    <div style={{ fontSize: 13, color: "#9AA3AF", marginTop: 2 }}>
+      {moveLabel}: <span style={{ color: "#E8EAED", fontWeight: 600 }}>{moveSan}</span>
+    </div>
+  );
 
   return (
     <Shell>
       {/* header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <Badge glyph={meta.symbol} color={meta.color} bg={meta.color + "22"} />
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span
-              style={{ fontSize: 16, fontWeight: 700, color: meta.color }}
-              data-testid="tip-quality"
-            >
-              {meta.label}
-            </span>
-            <span
+      <div style={{ display: "flex", alignItems: "flex-start", gap: compact ? 11 : 14 }}>
+        <Badge glyph={meta.symbol} color={meta.color} bg={meta.color + "22"} size={badgeSize} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {labelRow}
+          {moveText}
+        </div>
+        {compact && (
+          <div style={{ textAlign: "right", flex: "0 0 auto" }}>
+            <div
               style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: meta.color,
-                background: meta.color + "22",
-                borderRadius: 999,
-                padding: "2px 9px",
+                fontSize: 17,
+                fontWeight: 700,
+                fontVariantNumeric: "tabular-nums",
+                color: "#E8EAED",
+                lineHeight: 1,
               }}
             >
-              {meta.pill}
-            </span>
+              {formatEval(posEval)}
+            </div>
+            {lossDisplay > 0 && (
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontVariantNumeric: "tabular-nums",
+                  color: lossColor,
+                  marginTop: 3,
+                }}
+              >
+                {lossText}
+              </div>
+            )}
           </div>
-          <div style={{ fontSize: 13, color: "#9AA3AF", marginTop: 3 }}>
-            {moveLabel}: <span style={{ color: "#E8EAED", fontWeight: 600 }}>{moveSan}</span>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* eval + loss */}
-      <div style={{ display: "flex", gap: 10, marginTop: 15 }}>
-        <div style={innerBox}>
-          <div style={caption}>Ocena</div>
-          <div
-            style={{
-              fontSize: 22,
-              fontWeight: 700,
-              fontVariantNumeric: "tabular-nums",
-              marginTop: 3,
-              color: "#E8EAED",
-            }}
-          >
-            {formatEval(posEval)}
+      {/* eval + loss boxes (full layout only) */}
+      {!compact && (
+        <div style={{ display: "flex", gap: 10, marginTop: 15 }}>
+          <div style={innerBox}>
+            <div style={caption}>Ocena</div>
+            <div style={{ fontSize: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums", marginTop: 3, color: "#E8EAED" }}>
+              {formatEval(posEval)}
+            </div>
+          </div>
+          <div style={innerBox}>
+            <div style={caption}>Strata</div>
+            <div style={{ fontSize: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums", marginTop: 3, color: lossColor }}>
+              {lossText}
+            </div>
           </div>
         </div>
-        <div style={innerBox}>
-          <div style={caption}>Strata</div>
-          <div
-            style={{
-              fontSize: 22,
-              fontWeight: 700,
-              fontVariantNumeric: "tabular-nums",
-              marginTop: 3,
-              color: lossDisplay > 0 ? meta.color : "#5DBB63",
-            }}
-          >
-            {lossText}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* engine best move */}
       <div
         style={{
-          marginTop: 14,
+          marginTop: compact ? 11 : 14,
           background: "#0E1116",
           border: "1px solid #232833",
           borderRadius: 10,
-          padding: "12px 14px",
+          padding: compact ? "9px 11px" : "12px 14px",
         }}
       >
         <div style={{ ...caption, marginBottom: 6 }}>Najlepszy ruch wg silnika</div>
-        <div style={{ fontSize: 13.5, lineHeight: 1.55 }}>
+        <div style={{ fontSize: compact ? 12.5 : 13.5, lineHeight: 1.5 }}>
           <span style={{ color: "#21C7A8", fontWeight: 700 }}>
             {bestSan} ({formatEval(bestEval)})
           </span>
@@ -204,17 +241,10 @@ export function TipCard({ game }: { game: ChessVsBot }) {
         </div>
       </div>
 
-      {/* alternatives — click to explore that line */}
+      {/* alternatives — hover to preview, click to play */}
       {a.alternatives.length > 0 && (
-        <div style={{ marginTop: 14 }}>
-          <div
-            style={{
-              ...caption,
-              marginBottom: 8,
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
+        <div style={{ marginTop: compact ? 11 : 14 }}>
+          <div style={{ ...caption, marginBottom: 8, display: "flex", justifyContent: "space-between" }}>
             <span>Alternatywy</span>
             <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 500 }}>
               najedź = podgląd · klik = rozegraj
