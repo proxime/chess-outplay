@@ -1,4 +1,5 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactNode, RefObject } from "react";
 import { Board } from "./Board";
 import { Controls } from "./Controls";
 import { MoveList } from "./MoveList";
@@ -7,6 +8,22 @@ import { LEVELS, LEVEL_LIST } from "../engine/levels";
 import { GLYPH } from "../format";
 import type { Color, LevelId, PieceSymbol } from "../game/types";
 import type { ChessVsBot } from "../game/useChessVsBot";
+
+/** Largest square (in px) that fits the observed element, minus the eval bar. */
+function useSquare(ref: RefObject<HTMLDivElement | null>): number {
+  const [size, setSize] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () =>
+      setSize(Math.max(0, Math.min(el.clientWidth - 18, el.clientHeight)));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return size;
+}
 
 function CompactStrip({
   isBot,
@@ -98,6 +115,9 @@ export function CompactGame({
   const youDiff = game.playerColor === "w" ? game.material.diff : -game.material.diff;
   const pct = Math.max(6, Math.min(94, 50 + (game.evalWhiteCp / 100) * 7));
 
+  const areaRef = useRef<HTMLDivElement>(null);
+  const sq = useSquare(areaRef);
+
   const pillSelect: CSSProperties = {
     fontSize: 11,
     fontWeight: 600,
@@ -141,8 +161,6 @@ export function CompactGame({
       <div style={{ width: "100%", height: `${pct}%`, background: "#ECEDEF", transition: "height .3s ease" }} />
     </div>
   );
-
-  const boardSquare = "min(100cqw - 18px, 100cqh)";
 
   const botStrip = (
     <CompactStrip
@@ -272,19 +290,19 @@ export function CompactGame({
             </div>
           ) : (
             <div
+              ref={areaRef}
               style={{
                 flex: 1,
                 minHeight: 0,
                 minWidth: 0,
-                containerType: "size",
                 display: "flex",
                 gap: 8,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              {evalBar(boardSquare)}
-              <div style={{ flex: "0 0 auto", width: boardSquare, height: boardSquare }}>
+              {evalBar(sq ? `${sq}px` : undefined)}
+              <div style={{ flex: "0 0 auto", width: sq, height: sq }}>
                 <Board game={game} orientation={orientation} />
               </div>
             </div>
@@ -292,7 +310,7 @@ export function CompactGame({
           {youStrip}
         </div>
 
-        {/* panel */}
+        {/* panel: tip card + move list scroll together, controls pinned */}
         <div
           style={{
             flex: narrow ? "0 0 auto" : "0 0 290px",
@@ -300,10 +318,20 @@ export function CompactGame({
             display: "flex",
             flexDirection: "column",
             gap: 10,
+            minHeight: 0,
           }}
         >
-          <TipCard game={game} />
-          <div style={{ flex: narrow ? "0 0 auto" : 1, minHeight: 0, height: narrow ? 220 : undefined }}>
+          <div
+            style={{
+              flex: narrow ? "0 0 auto" : 1,
+              minHeight: 0,
+              overflowY: narrow ? "visible" : "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            <TipCard game={game} />
             <MoveList game={game} compact />
           </div>
           <Controls game={game} />

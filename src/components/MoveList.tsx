@@ -83,8 +83,8 @@ export function MoveList({
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [history.length]);
+    if (!compact && el) el.scrollTop = el.scrollHeight;
+  }, [history.length, compact]);
 
   return (
     <div
@@ -93,9 +93,6 @@ export function MoveList({
         border: "1px solid #232833",
         borderRadius: 12,
         overflow: "hidden",
-        ...(compact
-          ? { height: "100%", display: "flex", flexDirection: "column" }
-          : {}),
       }}
     >
       <div
@@ -128,11 +125,8 @@ export function MoveList({
 
       <div
         ref={scrollRef}
-        style={
-          compact
-            ? { flex: 1, minHeight: 0, overflowY: "auto" }
-            : { maxHeight: 300, overflowY: "auto" }
-        }
+        data-testid="ml-scroll"
+        style={compact ? {} : { maxHeight: 300, overflowY: "auto" }}
       >
         {rows.length === 0 && (
           <div style={{ padding: 16, fontSize: 13, color: "#9AA3AF" }}>
