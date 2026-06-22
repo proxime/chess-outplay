@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Chess Outplay",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Graj z AI i ucz się na każdym ruchu — wysuwany panel szachowy w rogu dowolnej strony.",
   "action": {
     "default_title": "Chess Outplay (pokaż/ukryj panel)",
